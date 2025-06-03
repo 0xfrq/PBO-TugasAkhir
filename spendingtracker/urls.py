@@ -24,6 +24,7 @@ urlpatterns = [
     path('kategori/create/', views.kategori_create, name='kategori_create'),
     path('kategori/delete/<str:kategori_id>/', views.kategori_delete, name='kategori_delete'),
     path('transaksi/', views.transaksi_list, name='transaksi_list'),
+    path('transaksi/delete/<str:transaksi_id>/', views.transaksi_delete, name='transaksi_delete'),
     path('transaksi/create/', views.transaksi_create, name='transaksi_create'),
     path('summary/', views.summary_view, name='summary'),
     path('api/test/', views.api_test, name='api_test'),

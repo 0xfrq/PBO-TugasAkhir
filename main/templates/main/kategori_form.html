@@ -1,1 +1,36 @@
-tambah kategori disini
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1>Create New Category</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+<!-- Hidden input for auto-generated ID -->
+        <input type="hidden" name="id" id="id" value="{{ random_id }}">
+
+        <div class="mb-3">
+            <label for="nama" class="form-label">Name</label>
+                <input type="text" name="nama" id="nama" class="form-control" required value="{{ nama|default:'' }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="ikon" class="form-label">Icon (emoji or text)</label>
+        <input type="text" name="ikon" id="ikon" class="form-control" value="{{ ikon|default:'fa-solid fa-money-bill-transfer' }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="warna" class="form-label">Color (Hex code)</label>
+        <input type="color" name="warna" id="warna" class="form-control form-control-color" value="{{ warna|default:'#000000' }}">
+        </div>
+
+        <button type="submit" class="btn btn-success">Create</button>
+        <a href="{% url 'kategori_list' %}" class="btn btn-secondary">Back</a>
+    </form>
+</div>
+{% endblock %}

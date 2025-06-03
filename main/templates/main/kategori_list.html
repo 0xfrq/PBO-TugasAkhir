@@ -1,6 +1,49 @@
-Kateori list disini
-<br>
-kategori 1
-etc
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1>Category List</h1>
 
-<a href="/kategori/create">tambah</a>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'kategori_create' %}" class="btn btn-primary mb-3">Create New Category</a>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Icon</th>
+                <th>Color</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for kategori in categories %}
+                <tr>
+                    <td>{{ kategori.id }}</td>
+                    <td>{{ kategori.nama }}</td>
+                    <td><i class="{{ kategori.getIkon }}" style="color: {{ kategori.getWarna }};"></i></td>
+                    <td><span style="color: {{ kategori.getWarna }}">{{ kategori.getWarna }}</span></td>
+                    <td>
+                    {% if kategori.id %}
+                        <form method="post" action="{% url 'kategori_delete' kategori.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    {% else %}
+                        <!-- Optionally show some message or disable delete button -->
+                        <button class="btn btn-danger btn-sm" disabled>Invalid ID</button>
+                    {% endif %}
+                                        </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">No categories found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

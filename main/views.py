@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from datetime import date, datetime
+import random
+import string
 from .models import (
     User, Kategori, Transaksi, TransaksiPemasukan, TransaksiPengeluaran,
     PengelolaKategori, PengelolaTransaksi, LayananRingkasan, TipeTransaksi
@@ -30,24 +32,38 @@ def kategori_list(request):
     return render(request, 'main/kategori_list.html', {'categories': categories})
 
 def kategori_create(request):
-    """Create new category"""
     if request.method == 'POST':
         id = request.POST.get('id')
         nama = request.POST.get('nama')
-        ikon = request.POST.get('ikon', '')
-        warna = request.POST.get('warna', '#000000')
-        
+        ikon = request.POST.get('ikon')
+        warna = request.POST.get('warna')
+
         # Check if ID already exists
         if Kategori.objects.filter(id=id).exists():
             messages.error(request, 'Category ID already exists!')
-            return render(request, 'main/kategori_form.html')
+            # Pass back the same posted id so form can keep that value
+            context = {
+                'random_id': id,
+                'nama': nama,
+                'ikon': ikon,
+                'warna': warna,
+            }
+            return render(request, 'main/kategori_form.html', context)
         
         kategori = Kategori(id=id, nama=nama, ikon=ikon, warna=warna)
         PengelolaKategori.tambahKategori(kategori)
         messages.success(request, 'Category created successfully!')
         return redirect('kategori_list')
     
-    return render(request, 'main/kategori_form.html')
+    else:  # GET request
+        random_id = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+        context = {'random_id': random_id}
+        return render(request, 'main/kategori_form.html', context)
+    
+def transaksi_delete(request, transaksi_id):
+    transaksi = get_object_or_404(Transaksi, id=transaksi_id)
+    transaksi.delete()
+    return redirect('transaksi_list')
 
 def kategori_delete(request, kategori_id):
     """Delete category"""
@@ -58,32 +74,29 @@ def kategori_delete(request, kategori_id):
     return redirect('kategori_list')
 
 def transaksi_list(request):
-    """Display all transactions"""
-    transactions = Transaksi.objects.all().order_by('-tanggal')
-    return render(request, 'main/transaksi_list.html', {'transactions': transactions})
+    transaksi_list = Transaksi.objects.all().order_by('-tanggal')
+    return render(request, 'main/transaksi_list.html', {
+        'transaksi_list': transaksi_list
+    })
+
 
 def transaksi_create(request):
-    """Create new transaction"""
+    random_id = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+
     if request.method == 'POST':
-        # Get form data
         id = request.POST.get('id')
         jumlah = request.POST.get('jumlah')
         tanggal = request.POST.get('tanggal')
         kategori_id = request.POST.get('kategori')
         catatan = request.POST.get('catatan', '')
         tipe = request.POST.get('tipe')
-        
-        # Get user (for now, get first user or create one)
+
         user = User.objects.first()
         if not user:
             user = User.objects.create(nama="Default User", email="user@example.com")
-        
-        # Get category
-        kategori = None
-        if kategori_id:
-            kategori = get_object_or_404(Kategori, id=kategori_id)
-        
-        # Create transaction based on type
+
+        kategori = get_object_or_404(Kategori, id=kategori_id) if kategori_id else None
+
         if tipe == TipeTransaksi.PEMASUKAN:
             sumber = request.POST.get('sumber_pemasukan', '')
             transaksi = TransaksiPemasukan(
@@ -98,18 +111,19 @@ def transaksi_create(request):
                 kategori=kategori, catatan=catatan, user=user,
                 metode_pembayaran=metode
             )
-        
+
         PengelolaTransaksi.tambahTransaksi(transaksi)
         messages.success(request, 'Transaction created successfully!')
         return redirect('transaksi_list')
-    
-    # Get categories for form
+
     categories = PengelolaKategori.ambilSemuaKategori()
     context = {
         'categories': categories,
-        'tipe_choices': TipeTransaksi.choices
+        'tipe_choices': TipeTransaksi.choices,
+        'random_id': random_id,
     }
     return render(request, 'main/transaksi_form.html', context)
+
 
 def summary_view(request):
     """Display financial summary"""

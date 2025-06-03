@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1>Create New Transaction</h1>
+
+    <div class="card mb-3 bg-light">
+        <div class="card-body">
+            <h5 class="card-title">Current Balance</h5>
+            <h3 class="text-primary">Rp {{ user.saldo|floatformat:2 }}</h3>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" id="transactionForm">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ random_id }}">
+
+        <div class="mb-3">
+            <label for="jumlah" class="form-label">Amount</label>
+            <div class="input-group">
+                <span class="input-group-text">Rp</span>
+                <input type="number" step="0.01" name="jumlah" id="jumlah" class="form-control" required onchange="updateBalancePreview()">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="tanggal" class="form-label">Date</label>
+            <input type="date" name="tanggal" id="tanggal" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="kategori" class="form-label">Category</label>
+            <select name="kategori" id="kategori" class="form-select" required>
+                <option value="">-- Select Category --</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}"> {{ cat.nama }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="tipe" class="form-label">Transaction Type</label>
+            <select name="tipe" id="tipe" class="form-select" required onchange="toggleFields()">
+                <option value="">-- Select Type --</option>
+                {% for value, label in tipe_choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div id="balance_preview" class="alert alert-info" style="display:none;">
+            <strong>Balance Preview:</strong>
+            <div id="preview_text"></div>
+        </div>
+
+        <div id="insufficient_balance" class="alert alert-danger" style="display:none;">
+            <strong>Warning:</strong> Insufficient balance for this transaction!
+        </div>
+
+        <div class="mb-3" id="pemasukan_field" style="display:none;">
+            <label for="sumber_pemasukan" class="form-label">Source of Income</label>
+            <input type="text" name="sumber_pemasukan" id="sumber_pemasukan" class="form-control">
+            <small class="form-text text-muted">
+                <i class="fas fa-info-circle"></i> This amount will be added to your balance as a deposit.
+            </small>
+        </div>
+
+        <div class="mb-3" id="pengeluaran_field" style="display:none;">
+            <label for="metode_pembayaran" class="form-label">Payment Method</label>
+            <input type="text" name="metode_pembayaran" id="metode_pembayaran" class="form-control">
+            <small class="form-text text-muted">
+                <i class="fas fa-warning"></i> This amount will be deducted from your balance.
+            </small>
+        </div>
+
+        <div class="mb-3">
+            <label for="catatan" class="form-label">Note</label>
+            <textarea name="catatan" id="catatan" class="form-control" rows="3"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success" id="submitBtn">Create</button>
+        <a href="{% url 'transaksi_list' %}" class="btn btn-secondary">Back</a>
+    </form>
+</div>
+
+<script>
+const currentBalance = {{ user.saldo|floatformat:2 }};
+
+function toggleFields() {
+    const tipe = document.getElementById('tipe').value;
+    const pemasukanField = document.getElementById('pemasukan_field');
+    const pengeluaranField = document.getElementById('pengeluaran_field');
+    
+    // Hide all fields first
+    pemasukanField.style.display = 'none';
+    pengeluaranField.style.display = 'none';
+    
+    // Show relevant field based on type
+    if (tipe === 'PEMASUKAN') {
+        pemasukanField.style.display = 'block';
+    } else if (tipe === 'PENGELUARAN') {
+        pengeluaranField.style.display = 'block';
+    }
+    
+    // Update balance preview
+    updateBalancePreview();
+}
+
+function updateBalancePreview() {
+    const tipe = document.getElementById('tipe').value;
+    const jumlah = parseFloat(document.getElementById('jumlah').value) || 0;
+    const previewDiv = document.getElementById('balance_preview');
+    const previewText = document.getElementById('preview_text');
+    const insufficientDiv = document.getElementById('insufficient_balance');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Hide elements initially
+    previewDiv.style.display = 'none';
+    insufficientDiv.style.display = 'none';
+    submitBtn.disabled = false;
+    submitBtn.className = 'btn btn-success';
+    
+    if (tipe && jumlah > 0) {
+        let newBalance;
+        
+        if (tipe === 'PEMASUKAN') {
+            newBalance = currentBalance + jumlah;
+            previewText.innerHTML = `
+                Current Balance: Rp ${currentBalance.toLocaleString('id-ID', {minimumFractionDigits: 2})}
+                <br>
+                <span class="text-success">+ Rp ${jumlah.toLocaleString('id-ID', {minimumFractionDigits: 2})} (Deposit)</span>
+                <br>
+                <strong>New Balance: Rp ${newBalance.toLocaleString('id-ID', {minimumFractionDigits: 2})}</strong>
+            `;
+            previewDiv.className = 'alert alert-success';
+            previewDiv.style.display = 'block';
+        } else if (tipe === 'PENGELUARAN') {
+            newBalance = currentBalance - jumlah;
+            
+            if (newBalance < 0) {
+                // Insufficient balance
+                insufficientDiv.style.display = 'block';
+                submitBtn.disabled = true;
+                submitBtn.className = 'btn btn-danger';
+                submitBtn.textContent = 'Insufficient Balance';
+                
+                previewText.innerHTML = `
+                    Current Balance: Rp ${currentBalance.toLocaleString('id-ID', {minimumFractionDigits: 2})}
+                    <br>
+                    <span class="text-danger">- Rp ${jumlah.toLocaleString('id-ID', {minimumFractionDigits: 2})} (Expense)</span>
+                    <br>
+                    <strong class="text-danger">New Balance: Rp ${newBalance.toLocaleString('id-ID', {minimumFractionDigits: 2})}</strong>
+                `;
+                previewDiv.className = 'alert alert-danger';
+            } else {
+                // Sufficient balance
+                previewText.innerHTML = `
+                    Current Balance: Rp ${currentBalance.toLocaleString('id-ID', {minimumFractionDigits: 2})}
+                    <br>
+                    <span class="text-warning">- Rp ${jumlah.toLocaleString('id-ID', {minimumFractionDigits: 2})} (Expense)</span>
+                    <br>
+                    <strong>New Balance: Rp ${newBalance.toLocaleString('id-ID', {minimumFractionDigits: 2})}</strong>
+                `;
+                previewDiv.className = 'alert alert-warning';
+                submitBtn.textContent = 'Create';
+            }
+            previewDiv.style.display = 'block';
+        }
+    }
+}
+
+// Set default date to today
+document.getElementById('tanggal').value = new Date().toISOString().split('T')[0];
+
+// Form submission validation
+document.getElementById('transactionForm').addEventListener('submit', function(e) {
+    const tipe = document.getElementById('tipe').value;
+    const jumlah = parseFloat(document.getElementById('jumlah').value) || 0;
+    
+    if (tipe === 'PENGELUARAN' && jumlah > currentBalance) {
+        e.preventDefault();
+        alert('Cannot create expense transaction: Insufficient balance!');
+        return false;
+    }
+    
+    // Confirmation dialog
+    const confirmMessage = tipe === 'PEMASUKAN' 
+        ? `Confirm deposit of Rp ${jumlah.toLocaleString('id-ID', {minimumFractionDigits: 2})}?`
+        : `Confirm expense of Rp ${jumlah.toLocaleString('id-ID', {minimumFractionDigits: 2})}?`;
+    
+    if (!confirm(confirmMessage)) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>
+
+<style>
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#balance_preview, #insufficient_balance {
+    border-radius: 8px;
+    border: none;
+    font-size: 0.9rem;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    border-right: none;
+}
+
+.form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.btn:disabled {
+    cursor: not-allowed;
+}
+
+.text-success {
+    color: #198754 !important;
+}
+
+.text-warning {
+    color: #ffc107 !important;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.form-text {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+}
+</style>
+{% endblock %}
