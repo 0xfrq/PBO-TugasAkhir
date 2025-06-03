@@ -89,7 +89,7 @@
 </div>
 
 <script>
-const currentBalance = {{ user.saldo|floatformat:2 }};
+const currentBalance = parseFloat("{{ user.saldo|default_if_none:0|floatformat:'2' }}");
 
 function toggleFields() {
     const tipe = document.getElementById('tipe').value;

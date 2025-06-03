@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Saldo Keuangan</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Card untuk saldo terkini -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Saldo Terkini</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h6 class="text-muted">Total Pemasukan</h6>
+                                <h3 class="text-success">Rp {{ pemasukan_total|default:0|floatformat:0 }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h6 class="text-muted">Total Pengeluaran</h6>
+                                <h3 class="text-danger">Rp {{ pengeluaran_total|default:0|floatformat:0 }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h6 class="text-muted">Saldo Akhir</h6>
+                                <h2 class="{% if saldo_akhir >= 0 %}text-primary{% else %}text-danger{% endif %}">
+                                    Rp {{ saldo_akhir|default:0|floatformat:0 }}
+                                </h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

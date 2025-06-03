@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1>Transaction Summary</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Select Month</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="summaryForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="bulan" class="form-label">Month</label>
+                            <select name="bulan" id="bulan" class="form-select" required>
+                                <option value="">-- Select Month --</option>
+                                <option value="1" {% if selected_month == 1 %}selected{% endif %}>January</option>
+                                <option value="2" {% if selected_month == 2 %}selected{% endif %}>February</option>
+                                <option value="3" {% if selected_month == 3 %}selected{% endif %}>March</option>
+                                <option value="4" {% if selected_month == 4 %}selected{% endif %}>April</option>
+                                <option value="5" {% if selected_month == 5 %}selected{% endif %}>May</option>
+                                <option value="6" {% if selected_month == 6 %}selected{% endif %}>June</option>
+                                <option value="7" {% if selected_month == 7 %}selected{% endif %}>July</option>
+                                <option value="8" {% if selected_month == 8 %}selected{% endif %}>August</option>
+                                <option value="9" {% if selected_month == 9 %}selected{% endif %}>September</option>
+                                <option value="10" {% if selected_month == 10 %}selected{% endif %}>October</option>
+                                <option value="11" {% if selected_month == 11 %}selected{% endif %}>November</option>
+                                <option value="12" {% if selected_month == 12 %}selected{% endif %}>December</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="tahun" class="form-label">Year</label>
+                            <select name="tahun" id="tahun" class="form-select" required>
+                                <option value="">-- Select Year --</option>
+                                {% for year in range_years %}
+                                    <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">Generate Summary</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">Monthly Summary</h4>
+                </div>
+                <div class="card-body">
+                    {% if selected_month and selected_year %}
+                        <h5 class="card-title">
+                            Summary for 
+                            {% if selected_month == 1 %}January
+                            {% elif selected_month == 2 %}February
+                            {% elif selected_month == 3 %}March
+                            {% elif selected_month == 4 %}April
+                            {% elif selected_month == 5 %}May
+                            {% elif selected_month == 6 %}June
+                            {% elif selected_month == 7 %}July
+                            {% elif selected_month == 8 %}August
+                            {% elif selected_month == 9 %}September
+                            {% elif selected_month == 10 %}October
+                            {% elif selected_month == 11 %}November
+                            {% elif selected_month == 12 %}December
+                            {% endif %}
+                            {{ selected_year }}
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="alert alert-success">
+                                    <strong>Income:</strong> Rp {{ monthly_income|floatformat:0 }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-danger">
+                                    <strong>Expense:</strong> Rp {{ monthly_expense|floatformat:0 }}
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Please select a month and year to view the summary.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if selected_month and selected_year and transactions %}
+    <div class="mt-4">
+        <h3>Transaction Details</h3>
+        <div class="accordion" id="categoryAccordion">
+            {% for category, cat_transactions in transactions_by_category.items %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse{{ forloop.counter }}">
+                        <i class="{{ category.getIkon }}" style="color: {{ category.getWarna }}; margin-right: 10px;"></i>
+                        <strong>{{ category.nama }}</strong> - 
+                        {% if cat_transactions.0.tipe == 'PEMASUKAN' %}
+                            <span class="text-success ms-2">Rp {{ cat_transactions.0.total|floatformat:0 }}</span>
+                        {% else %}
+                            <span class="text-danger ms-2">Rp {{ cat_transactions.0.total|floatformat:0 }}</span>
+                        {% endif %}
+                     </button>
+                </h2>
+                <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#categoryAccordion">
+                    <div class="accordion-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in cat_transactions %}
+                                <tr>
+                                    <td>{{ transaction.tanggal|date:"d M Y" }}</td>
+                                    <td>{{ transaction.catatan }}</td>
+                                    <td>Rp {{ transaction.jumlah|floatformat:0 }}</td>
+                                    <td>
+                                        {% if transaction.tipe == 'PEMASUKAN' %}
+                                            <span class="badge bg-success">Income</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Expense</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
