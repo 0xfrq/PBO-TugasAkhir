@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'categories',
     'transactions',
     'reports',
+    'django.contrib.humanize',
+
 ]
 
 MIDDLEWARE = [

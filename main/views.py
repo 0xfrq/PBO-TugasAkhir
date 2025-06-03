@@ -10,6 +10,15 @@ from .models import (
     PengelolaKategori, PengelolaTransaksi, LayananRingkasan, TipeTransaksi
 )
 
+
+
+def rp(value):
+    try:
+        return f"Rp {int(value):,}".replace(',', '.')
+    except (ValueError, TypeError):
+        return f"Rp 0"
+
+
 def show_main(request):
     """Main dashboard view"""
     context = {
@@ -100,6 +109,7 @@ def transaksi_create(request):
         catatan = request.POST.get('catatan', '')
         tipe = request.POST.get('tipe')
 
+
         user = User.objects.first()
         if not user:
             user = User.objects.create(nama="Default User", email="user@example.com")
@@ -126,11 +136,22 @@ def transaksi_create(request):
         return redirect('transaksi_list')
 
     categories = PengelolaKategori.ambilSemuaKategori()
+    pemasukan_total = PengelolaTransaksi.hitungTotalBerdasarkanTipe(
+        TipeTransaksi.PEMASUKAN
+    )
+    pengeluaran_total = PengelolaTransaksi.hitungTotalBerdasarkanTipe(
+        TipeTransaksi.PENGELUARAN
+    )
+    saldo_akhir = pemasukan_total - pengeluaran_total
     context = {
         'categories': categories,
         'tipe_choices': TipeTransaksi.choices,
         'random_id': random_id,
+        'saldo_akhir': rp(saldo_akhir),
+        'pemasukan_total' : rp(pemasukan_total),
+        'pengeluaran_total' : rp(pengeluaran_total)
     }
+
     return render(request, 'main/transaksi_form.html', context)
 
 
@@ -221,7 +242,7 @@ def api_test(request):
 
 def saldo_view(request):
     """Display current balance summary"""
-    context = {}
+    
     pemasukan_total = PengelolaTransaksi.hitungTotalBerdasarkanTipe(
         TipeTransaksi.PEMASUKAN
     )
@@ -229,8 +250,10 @@ def saldo_view(request):
         TipeTransaksi.PENGELUARAN
     )
     saldo_akhir = pemasukan_total - pengeluaran_total
-    context['saldo_akhir'] = saldo_akhir
-    context['pemasukan_total'] = pemasukan_total
-    context['pengeluaran_total'] = pengeluaran_total
+    context = {
+        "saldo_akhir" : rp(saldo_akhir),
+        "pemasukan_total" : rp(pemasukan_total),
+        "pengeluaran_total" : rp(pengeluaran_total),
+    }
     
     return render(request, 'main/saldo.html', context)
