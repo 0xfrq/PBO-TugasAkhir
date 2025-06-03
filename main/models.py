@@ -80,7 +80,6 @@ class TipeTransaksi(models.TextChoices):
     PEMASUKAN = 'PEMASUKAN', 'Pemasukan'
     PENGELUARAN = 'PENGELUARAN', 'Pengeluaran'
 
-# Base Transaksi class (Interface implementation)
 class Transaksi(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
     jumlah = models.DecimalField(max_digits=15, decimal_places=2)
@@ -212,7 +211,6 @@ class TransaksiPengeluaran(Transaksi):
     class Meta:
         verbose_name_plural = "Transaksi Pengeluaran"
 
-# Manager/Service Classes as described in the class diagram
 class PengelolaKategori:
     """Service class for managing Kategori operations"""
     

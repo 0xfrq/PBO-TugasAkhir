@@ -96,18 +96,15 @@ function toggleFields() {
     const pemasukanField = document.getElementById('pemasukan_field');
     const pengeluaranField = document.getElementById('pengeluaran_field');
     
-    // Hide all fields first
     pemasukanField.style.display = 'none';
     pengeluaranField.style.display = 'none';
     
-    // Show relevant field based on type
     if (tipe === 'PEMASUKAN') {
         pemasukanField.style.display = 'block';
     } else if (tipe === 'PENGELUARAN') {
         pengeluaranField.style.display = 'block';
     }
     
-    // Update balance preview
     updateBalancePreview();
 }
 
@@ -119,7 +116,6 @@ function updateBalancePreview() {
     const insufficientDiv = document.getElementById('insufficient_balance');
     const submitBtn = document.getElementById('submitBtn');
     
-    // Hide elements initially
     previewDiv.style.display = 'none';
     insufficientDiv.style.display = 'none';
     submitBtn.disabled = false;
@@ -158,7 +154,6 @@ function updateBalancePreview() {
                 `;
                 previewDiv.className = 'alert alert-danger';
             } else {
-                // Sufficient balance
                 previewText.innerHTML = `
                     Current Balance: Rp ${currentBalance.toLocaleString('id-ID', {minimumFractionDigits: 2})}
                     <br>
@@ -174,10 +169,8 @@ function updateBalancePreview() {
     }
 }
 
-// Set default date to today
 document.getElementById('tanggal').value = new Date().toISOString().split('T')[0];
 
-// Form submission validation
 document.getElementById('transactionForm').addEventListener('submit', function(e) {
     const tipe = document.getElementById('tipe').value;
     const jumlah = parseFloat(document.getElementById('jumlah').value) || 0;
@@ -188,7 +181,6 @@ document.getElementById('transactionForm').addEventListener('submit', function(e
         return false;
     }
     
-    // Confirmation dialog
     const confirmMessage = tipe === 'PEMASUKAN' 
         ? `Confirm deposit of Rp ${jumlah.toLocaleString('id-ID', {minimumFractionDigits: 2})}?`
         : `Confirm expense of Rp ${jumlah.toLocaleString('id-ID', {minimumFractionDigits: 2})}?`;
