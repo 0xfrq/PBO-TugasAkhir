@@ -15,21 +15,77 @@
 
         <div class="mb-3">
             <label for="nama" class="form-label">Name</label>
-                <input type="text" name="nama" id="nama" class="form-control" required value="{{ nama|default:'' }}">
+            <input type="text" name="nama" id="nama" class="form-control" required value="{{ nama|default:'' }}">
         </div>
 
         <div class="mb-3">
-            <label for="ikon" class="form-label">Icon (emoji or text)</label>
-        <input type="text" name="ikon" id="ikon" class="form-control" value="{{ ikon|default:'fa-solid fa-money-bill-transfer' }}">
+            <label for="ikon" class="form-label">Icon</label>
+            <div class="input-group">
+                <input type="text" name="ikon" id="ikon" class="form-control" value="{{ ikon }}" readonly>
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#iconPickerModal">
+                    Pick Icon
+                </button>
+            </div>
+            <small class="form-text text-muted">
+                Preview: <i id="iconPreview" class="{{ ikon|default:'fa-solid fa-money-bill-transfer' }}"></i>
+            </small>
         </div>
 
         <div class="mb-3">
             <label for="warna" class="form-label">Color (Hex code)</label>
-        <input type="color" name="warna" id="warna" class="form-control form-control-color" value="{{ warna|default:'#000000' }}">
+            <input type="color" name="warna" id="warna" class="form-control form-control-color" value="{{ warna|default:'#000000' }}">
         </div>
 
         <button type="submit" class="btn btn-success">Create</button>
         <a href="{% url 'kategori_list' %}" class="btn btn-secondary">Back</a>
     </form>
 </div>
+
+<div class="modal fade" id="iconPickerModal" tabindex="-1" aria-labelledby="iconPickerLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="iconPickerLabel">Select an Icon</h5>
+
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex flex-wrap gap-2">
+          {% for icon in ikon_list %}
+              <button type="button" class="btn btn-light border icon-select" data-icon="{{ icon }}">
+                  <i class="{{ icon }}"></i>
+              </button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const iconInput = document.getElementById("ikon");
+    const iconPreview = document.getElementById("iconPreview");
+    const colorInput = document.getElementById("warna");
+
+    function updateIconColor() {
+        iconPreview.style.color = colorInput.value;
+    }
+
+    updateIconColor();
+    document.querySelectorAll(".icon-select").forEach(button => {
+        button.addEventListener("click", function () {
+            const selectedIcon = this.getAttribute("data-icon");
+            iconInput.value = selectedIcon;
+            iconPreview.className = selectedIcon;
+            updateIconColor();
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById("iconPickerModal"));
+            if (modal) modal.hide();
+        });
+    });
+
+    colorInput.addEventListener("input", updateIconColor);
+});
+</script>
 {% endblock %}

@@ -31,6 +31,12 @@ def kategori_list(request):
     return render(request, 'main/kategori_list.html', {'categories': categories})
 
 def kategori_create(request):
+    ikon_list = [
+        'fa-solid fa-money-bill-transfer', 'fa-solid fa-car', 'fa-solid fa-house',
+        'fa-solid fa-utensils', 'fa-solid fa-heart', 'fa-solid fa-book',
+        'fa-solid fa-gift', 'fa-solid fa-bolt', 'fa-solid fa-bus', 'fa-solid fa-music'
+    ]
+
     if request.method == 'POST':
         id = request.POST.get('id')
         nama = request.POST.get('nama')
@@ -44,6 +50,7 @@ def kategori_create(request):
                 'nama': nama,
                 'ikon': ikon,
                 'warna': warna,
+                'ikon_list': ikon_list
             }
             return render(request, 'main/kategori_form.html', context)
         
@@ -52,10 +59,14 @@ def kategori_create(request):
         messages.success(request, 'Category created successfully!')
         return redirect('kategori_list')
     
-    else:  
+    else:
         random_id = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
-        context = {'random_id': random_id}
+        context = {
+            'random_id': random_id,
+            'ikon_list': ikon_list
+        }
         return render(request, 'main/kategori_form.html', context)
+
     
 def transaksi_delete(request, transaksi_id):
     transaksi = get_object_or_404(Transaksi, id=transaksi_id)
