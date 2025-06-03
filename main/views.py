@@ -18,7 +18,6 @@ def show_main(request):
         'transaksi_count': Transaksi.objects.count(),
     }
     
-    # Calculate today's summary if there are transactions
     if Transaksi.objects.exists():
         today = date.today()
         today_total = LayananRingkasan.hitungTotalBerdasarkanTanggal(today)
@@ -38,10 +37,8 @@ def kategori_create(request):
         ikon = request.POST.get('ikon')
         warna = request.POST.get('warna')
 
-        # Check if ID already exists
         if Kategori.objects.filter(id=id).exists():
             messages.error(request, 'Category ID already exists!')
-            # Pass back the same posted id so form can keep that value
             context = {
                 'random_id': id,
                 'nama': nama,
@@ -55,7 +52,7 @@ def kategori_create(request):
         messages.success(request, 'Category created successfully!')
         return redirect('kategori_list')
     
-    else:  # GET request
+    else:  
         random_id = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
         context = {'random_id': random_id}
         return render(request, 'main/kategori_form.html', context)
@@ -129,16 +126,13 @@ def summary_view(request):
     """Display financial summary"""
     context = {}
     
-    # Today's summary
     today = date.today()
     context['today_total'] = LayananRingkasan.hitungTotalBerdasarkanTanggal(today)
     
-    # This month's summary
     context['month_total'] = LayananRingkasan.hitungTotalBerdasarkanBulan(
         today.month, today.year
     )
     
-    # Summary by type
     context['pemasukan_total'] = PengelolaTransaksi.hitungTotalBerdasarkanTipe(
         TipeTransaksi.PEMASUKAN
     )
@@ -146,25 +140,20 @@ def summary_view(request):
         TipeTransaksi.PENGELUARAN
     )
     
-    # Net balance
     context['net_balance'] = context['pemasukan_total'] - context['pengeluaran_total']
     
     return render(request, 'main/summary.html', context)
 
 def api_test(request):
     """Test API endpoint for your models"""
-    # Test creating some sample data
     try:
-        # Create a test user if none exists
         if not User.objects.exists():
             user = User.objects.create(nama="Test User", email="test@example.com")
         
-        # Create a test category
         if not Kategori.objects.filter(id="test").exists():
             kategori = Kategori(id="test", nama="Test Category", ikon="🧪", warna="#FF5733")
             PengelolaKategori.tambahKategori(kategori)
         
-        # Get counts
         data = {
             'status': 'success',
             'message': 'API working correctly!',
