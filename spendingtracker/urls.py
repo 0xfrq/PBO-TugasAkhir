@@ -28,4 +28,5 @@ urlpatterns = [
     path('transaksi/create/', views.transaksi_create, name='transaksi_create'),
     path('summary/', views.summary_view, name='summary'),
     path('api/test/', views.api_test, name='api_test'),
+    path('saldo/', views.saldo_view, name='saldo'),
 ]

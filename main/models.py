@@ -395,3 +395,21 @@ class LayananRingkasan:
             'total_pengeluaran': total_pengeluaran,
             'selisih': total_pemasukan - total_pengeluaran
         }
+    
+    @staticmethod
+    def hitungPemasukanBerdasarkanBulan(bulan, tahun):
+        """Menghitung total pemasukan pada bulan dan tahun tertentu"""
+        return sum(t.jumlah for t in Transaksi.objects.filter(
+            tanggal__month=bulan,
+            tanggal__year=tahun,
+            tipe=TipeTransaksi.PEMASUKAN
+        ))
+    
+    @staticmethod
+    def hitungPengeluaranBerdasarkanBulan(bulan, tahun):
+        """Menghitung total pengeluaran pada bulan dan tahun tertentu"""
+        return sum(t.jumlah for t in Transaksi.objects.filter(
+            tanggal__month=bulan,
+            tanggal__year=tahun,
+            tipe=TipeTransaksi.PENGELUARAN
+        ))

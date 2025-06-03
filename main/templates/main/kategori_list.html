@@ -26,7 +26,7 @@
                 <tr>
                     <td>{{ kategori.id }}</td>
                     <td>{{ kategori.nama }}</td>
-                    <td><i class="{{ kategori.getIkon }}" style="color: {{ kategori.getWarna }};"></i></td>
+                    <td><i class="{{ kategori.getIkon }}" style="color: {{ kategori.getWarna }}"></i></td>
                     <td><span style="color: {{ kategori.getWarna }}">{{ kategori.getWarna }}</span></td>
                     <td>
                     {% if kategori.id %}
@@ -37,7 +37,7 @@
                     {% else %}
                         <button class="btn btn-danger btn-sm" disabled>Invalid ID</button>
                     {% endif %}
-                                        </td>
+                    </td>
                 </tr>
             {% empty %}
                 <tr><td colspan="5">No categories found.</td></tr>

@@ -4,6 +4,7 @@ from django.contrib import messages
 from datetime import date, datetime
 import random
 import string
+import json
 from .models import (
     User, Kategori, Transaksi, TransaksiPemasukan, TransaksiPengeluaran,
     PengelolaKategori, PengelolaTransaksi, LayananRingkasan, TipeTransaksi
@@ -139,19 +140,56 @@ def summary_view(request):
     
     today = date.today()
     context['today_total'] = LayananRingkasan.hitungTotalBerdasarkanTanggal(today)
+    selected_month = today.month
+    selected_year = today.year
     
+    if request.method == 'POST':
+        selected_month = int(request.POST.get('bulan', selected_month))
+        selected_year = int(request.POST.get('tahun', selected_year))
+    
+    context['selected_month'] = selected_month
+    context['selected_year'] = selected_year
     context['month_total'] = LayananRingkasan.hitungTotalBerdasarkanBulan(
-        today.month, today.year
+        selected_month, selected_year
     )
-    
+    current_year = today.year
+    context['range_years'] = range(current_year - 5, current_year + 1)
     context['pemasukan_total'] = PengelolaTransaksi.hitungTotalBerdasarkanTipe(
         TipeTransaksi.PEMASUKAN
     )
     context['pengeluaran_total'] = PengelolaTransaksi.hitungTotalBerdasarkanTipe(
         TipeTransaksi.PENGELUARAN
     )
-    
     context['net_balance'] = context['pemasukan_total'] - context['pengeluaran_total']
+    
+    transactions = Transaksi.objects.filter(
+        tanggal__month=selected_month,
+        tanggal__year=selected_year
+    ).order_by('tanggal')
+    
+    # Add to context
+    context['transactions'] = transactions
+    
+    monthly_income = sum(t.jumlah for t in transactions if t.tipe == TipeTransaksi.PEMASUKAN)
+    monthly_expense = sum(t.jumlah for t in transactions if t.tipe == TipeTransaksi.PENGELUARAN)
+    
+    context['monthly_income'] = monthly_income
+    context['monthly_expense'] = monthly_expense
+    
+    transactions_by_category = {}
+    for transaction in transactions:
+        category = transaction.kategori
+        if category not in transactions_by_category:
+            transactions_by_category[category] = []
+        transactions_by_category[category].append(transaction)
+    
+    for category, cat_transactions in transactions_by_category.items():
+        total = sum(t.jumlah for t in cat_transactions)
+        if cat_transactions:
+            cat_transactions[0].total = total
+            cat_transactions[0].tipe = cat_transactions[0].tipe
+    
+    context['transactions_by_category'] = transactions_by_category
     
     return render(request, 'main/summary.html', context)
 
@@ -180,3 +218,19 @@ def api_test(request):
         }
     
     return JsonResponse(data)
+
+def saldo_view(request):
+    """Display current balance summary"""
+    context = {}
+    pemasukan_total = PengelolaTransaksi.hitungTotalBerdasarkanTipe(
+        TipeTransaksi.PEMASUKAN
+    )
+    pengeluaran_total = PengelolaTransaksi.hitungTotalBerdasarkanTipe(
+        TipeTransaksi.PENGELUARAN
+    )
+    saldo_akhir = pemasukan_total - pengeluaran_total
+    context['saldo_akhir'] = saldo_akhir
+    context['pemasukan_total'] = pemasukan_total
+    context['pengeluaran_total'] = pengeluaran_total
+    
+    return render(request, 'main/saldo.html', context)
